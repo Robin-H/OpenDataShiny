@@ -1,0 +1,37 @@
+library('httr')
+library('XML')
+library('dplyr')
+library('lubridate')
+library('jsonlite')
+
+# hier URL van de Odata link inzetten
+url <- "http://opendata.cbs.nl/ODataFeed/OData/82534NED/TypedDataSet"
+
+# omdat de Odata vrijwel altijd verwijs naar meerdere sets, moet je eigenlijk vanuit de hoofdlink, eerst de URL pakken en dan loop maken om de onderstaande functie.
+
+getODataResourceXML <- function(url){
+          data <- xmlParse(url)
+          xmlNames <- xpathSApply(data,
+                                  '//ns:entry[1]//m:properties[1]/d:*',xmlName, 
+                                  namespaces = c(ns = "http://www.w3.org/2005/Atom",
+                                                 m="http://schemas.microsoft.com/ado/2007/08/dataservices/metadata",
+                                                 d="http://schemas.microsoft.com/ado/2007/08/dataservices"))
+          properties <- xpathSApply(data,'//m:properties/d:*',xmlValue)
+          # Cast naar frame (<<- om ook globaal op te slaan)
+          opendataSet <<- as.data.frame(matrix(properties,ncol=length(xmlNames),byrow=TRUE))
+          # set the column names
+          names(opendataSet) <<- xmlNames
+          return(opendataSet)
+}
+
+
+getODataResourceJSON <- function(url){
+        data <- fromJSON(url)
+        opendataSet1 <<- as.data.frame(data)
+        # set the column names
+        return(opendataSet1)
+}
+
+
+#getODataResourceJSON(url)
+getODataResourceXML(url)
